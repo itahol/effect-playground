@@ -28,6 +28,7 @@
     "changeset-publish": "pnpm build && TEST_DIST= pnpm vitest && changeset publish"
   },
   "dependencies": {
+    "@okta/okta-sdk-nodejs": "^7.2.1",
     "effect": "latest"
   },
   "devDependencies": {
