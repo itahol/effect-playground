@@ -1,3 +1,19 @@
-import * as Effect from "effect/Effect"
+import { Effect, Stream } from "effect";
+import * as Okta from "./okta.js";
 
-Effect.runPromise(Effect.log("Hello, World!"))
+const main = Effect.gen(function* () {
+  Effect.log("Starting Okta User Listing...");
+  const users = Okta.listOktaUsers;
+  yield* users.pipe(
+    Stream.tap((user) =>
+      Effect.log(`User: ${user.profile?.firstName} ${user.profile?.lastName}`)
+    ),
+    Stream.runDrain
+  );
+}).pipe(Effect.provide(Okta.fromEnv));
+
+Effect.runPromiseExit(
+  main.pipe(
+    Effect.catchAll((err) => Effect.logError(`Main effect failed: ${err}`))
+  )
+);
