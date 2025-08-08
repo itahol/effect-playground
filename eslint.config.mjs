@@ -14,12 +14,12 @@ const __dirname = path.dirname(__filename);
 const compat = new FlatCompat({
   baseDirectory: __dirname,
   recommendedConfig: js.configs.recommended,
-  allConfig: js.configs.all,
+  allConfig: js.configs.all
 });
 
 export default [
   {
-    ignores: ["**/dist", "**/build", "**/docs", "**/*.md"],
+    ignores: ["**/dist", "**/build", "**/docs", "**/*.md"]
   },
   ...compat.extends(
     "eslint:recommended",
@@ -32,25 +32,25 @@ export default [
       import: fixupPluginRules(_import),
       "sort-destructure-keys": sortDestructureKeys,
       "simple-import-sort": simpleImportSort,
-      codegen,
+      codegen
     },
 
     languageOptions: {
       parser: tsParser,
       ecmaVersion: 2018,
-      sourceType: "module",
+      sourceType: "module"
     },
 
     settings: {
       "import/parsers": {
-        "@typescript-eslint/parser": [".ts", ".tsx"],
+        "@typescript-eslint/parser": [".ts", ".tsx"]
       },
 
       "import/resolver": {
         typescript: {
-          alwaysTryTypes: true,
-        },
-      },
+          alwaysTryTypes: true
+        }
+      }
     },
 
     rules: {
@@ -64,10 +64,9 @@ export default [
       "no-restricted-syntax": [
         "error",
         {
-          selector:
-            "CallExpression[callee.property.name='push'] > SpreadElement.arguments",
-          message: "Do not use spread arguments in Array.push",
-        },
+          selector: "CallExpression[callee.property.name='push'] > SpreadElement.arguments",
+          message: "Do not use spread arguments in Array.push"
+        }
       ],
 
       "no-unused-vars": "off",
@@ -86,8 +85,8 @@ export default [
         "warn",
         {
           default: "generic",
-          readonly: "generic",
-        },
+          readonly: "generic"
+        }
       ],
 
       "@typescript-eslint/member-delimiter-style": 0,
@@ -101,8 +100,8 @@ export default [
         "error",
         {
           argsIgnorePattern: "^_",
-          varsIgnorePattern: "^_",
-        },
+          varsIgnorePattern: "^_"
+        }
       ],
 
       "@typescript-eslint/ban-ts-comment": "off",
@@ -124,10 +123,10 @@ export default [
             quoteStyle: "alwaysDouble",
             trailingCommas: "never",
             operatorPosition: "maintain",
-            "arrowFunction.useParentheses": "force",
-          },
-        },
-      ],
-    },
-  },
+            "arrowFunction.useParentheses": "force"
+          }
+        }
+      ]
+    }
+  }
 ];

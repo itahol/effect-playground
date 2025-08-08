@@ -1,0 +1,16 @@
+{
+  "typescript": {
+    "indentWidth": 2,
+    "lineWidth": 120,
+    "semiColons": "always",
+    "quoteStyle": "alwaysDouble",
+    "trailingCommas": "never",
+    "operatorPosition": "maintain",
+    "arrowFunction.useParentheses": "force"
+  },
+  "excludes": ["**/node_modules"],
+  "plugins": [
+    "https://plugins.dprint.dev/typescript-0.95.9.wasm",
+    "https://plugins.dprint.dev/prettier-0.58.2.json@2fd8cc9c9773364848dc93735b01a00d55fcfa78a56a9230b4b63c014964c82d"
+  ]
+}
