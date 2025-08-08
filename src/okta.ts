@@ -68,15 +68,26 @@ export const listOktaUsers = Effect.gen(function* () {
   return collectionToStream(response);
 }).pipe(Stream.unwrap);
 
+export const listOktaGroups = Effect.gen(function* () {
+  const okta = yield* Okta;
+  const response = yield* okta.use((client) => client.groupApi.listGroups());
+  return collectionToStream(response);
+}).pipe(Stream.unwrap);
+
+export const listOktaGroupMembers = (groupId: string) =>
+  Effect.gen(function* () {
+    const okta = yield* Okta;
+    const response = yield* okta.use((client) =>
+      client.groupApi.listGroupUsers({ groupId })
+    );
+    return collectionToStream(response);
+  }).pipe(Stream.unwrap);
+
 function collectionToStream<T>(
   collection: OktaSdk.Collection<T>
 ): Stream.Stream<T, OktaError> {
   return Stream.fromAsyncIterable(
     collection,
-    (e) =>
-      new OktaError({
-        cause: e,
-        message: "Failed to convert Okta collection to stream",
-      })
+    (cause) => new OktaError({ cause })
   ).pipe(Stream.filter((item) => item !== null));
 }
