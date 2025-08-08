@@ -2,7 +2,7 @@ import { Effect, Option, pipe, Stream } from "effect";
 import * as Okta from "./okta.js";
 
 const getAndLogMembers = (groupId: string) =>
-  Effect.gen(function* () {
+  Effect.gen(function*() {
     const members = Okta.listOktaGroupMembers(groupId);
     yield* members.pipe(
       Stream.tap((user) =>
@@ -14,22 +14,18 @@ const getAndLogMembers = (groupId: string) =>
     );
   });
 
-const main = Effect.gen(function* () {
+const main = Effect.gen(function*() {
   Effect.log("Starting Okta User Listing...");
   yield* pipe(
     Okta.listOktaUsers,
-    Stream.tap((user) =>
-      Effect.log(`User: ${user.profile?.firstName} ${user.profile?.lastName}`)
-    ),
+    Stream.tap((user) => Effect.log(`User: ${user.profile?.firstName} ${user.profile?.lastName}`)),
     Stream.runDrain
   );
   Effect.log("Starting Okta Group Listing...");
   yield* pipe(
     Okta.listOktaGroups,
     Stream.tap((group) => Effect.log(`Group: ${group.profile?.name}`)),
-    Stream.map((group) =>
-      Option.fromNullable(group?.id).pipe(Option.getOrThrow)
-    ),
+    Stream.map((group) => Option.fromNullable(group?.id).pipe(Option.getOrThrow)),
     Stream.tap((groupId) => Effect.log(`Group ID: ${groupId}`)),
     Stream.mapEffect(getAndLogMembers, { concurrency: "unbounded" }),
     Stream.runDrain

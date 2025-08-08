@@ -1,5 +1,5 @@
-import path from "path"
-import { defineConfig } from "vitest/config"
+import path from "path";
+import { defineConfig } from "vitest/config";
 
 export default defineConfig({
   plugins: [],
@@ -14,4 +14,4 @@ export default defineConfig({
       "@template/basic": path.join(__dirname, "src")
     }
   }
-})
+});
