@@ -1,0 +1,8 @@
+{
+  "formatter": {
+    "external": {
+      "command": "npx",
+      "arguments": ["dprint", "fmt", "--stdin", "{buffer_path}"]
+    }
+  }
+}
