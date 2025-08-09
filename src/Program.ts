@@ -1,5 +1,7 @@
 import { NodeSdk } from "@effect/opentelemetry";
-import { BatchSpanProcessor, ConsoleSpanExporter } from "@opentelemetry/sdk-trace-base";
+import { OTLPTraceExporter } from "@opentelemetry/exporter-trace-otlp-http";
+import { BatchSpanProcessor } from "@opentelemetry/sdk-trace-base";
+import "dotenv/config";
 import { Effect, Option, pipe, Stream } from "effect";
 import * as Okta from "./okta.js";
 
@@ -55,13 +57,12 @@ const oktaScan = Effect.gen(function*() {
 const NodeSdkLive = NodeSdk.layer(() => ({
   resource: { serviceName: "okta-assets-detector" },
   // Export span data to the console
-  spanProcessor: new BatchSpanProcessor(new ConsoleSpanExporter())
+  spanProcessor: new BatchSpanProcessor(new OTLPTraceExporter())
 }));
 
 Effect.runPromiseExit(
   oktaScan.pipe(
-    Effect.catchAll((err) => Effect.logError(`Main effect failed: ${err}`))
-  ).pipe(
-    Effect.provide(NodeSdkLive)
+    Effect.provide(NodeSdkLive),
+    Effect.catchAllCause(Effect.logError)
   )
 );
