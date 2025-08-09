@@ -1,7 +1,7 @@
 import { Effect, Option, pipe, Stream } from "effect";
 import * as Okta from "./okta.js";
 
-const getAndLogMembers = (groupId: string) =>
+const detectGroupMembers = (groupId: string) =>
   Effect.gen(function*() {
     const members = Okta.listOktaGroupMembers(groupId);
     yield* members.pipe(
@@ -14,7 +14,7 @@ const getAndLogMembers = (groupId: string) =>
     );
   });
 
-const main = Effect.gen(function*() {
+const program = Effect.gen(function*() {
   Effect.log("Starting Okta User Listing...");
   yield* pipe(
     Okta.listOktaUsers,
@@ -27,13 +27,13 @@ const main = Effect.gen(function*() {
     Stream.tap((group) => Effect.log(`Group: ${group.profile?.name}`)),
     Stream.map((group) => Option.fromNullable(group?.id).pipe(Option.getOrThrow)),
     Stream.tap((groupId) => Effect.log(`Group ID: ${groupId}`)),
-    Stream.mapEffect(getAndLogMembers, { concurrency: "unbounded" }),
+    Stream.mapEffect(detectGroupMembers, { concurrency: "unbounded" }),
     Stream.runDrain
   );
 }).pipe(Effect.provide(Okta.fromEnv));
 
 Effect.runPromiseExit(
-  main.pipe(
+  program.pipe(
     Effect.timed,
     Effect.tap((timing) => Effect.log(`Main effect completed in ${timing}`)),
     Effect.catchAll((err) => Effect.logError(`Main effect failed: ${err}`))
