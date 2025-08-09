@@ -1,3 +1,5 @@
+import { NodeSdk } from "@effect/opentelemetry";
+import { BatchSpanProcessor, ConsoleSpanExporter } from "@opentelemetry/sdk-trace-base";
 import { Effect, Option, pipe, Stream } from "effect";
 import * as Okta from "./okta.js";
 
@@ -9,7 +11,7 @@ const detectUsers = Effect.gen(function*() {
     Stream.runDrain
   );
   yield* Effect.log("Finished detecting Okta users");
-});
+}).pipe(Effect.withSpan("detectUsers"));
 
 const detectGroups = Effect.gen(function*() {
   yield* Effect.log("Starting to detect Okta groups");
@@ -21,7 +23,7 @@ const detectGroups = Effect.gen(function*() {
     Stream.runDrain
   );
   yield* Effect.log("Finished detecting Okta groups");
-});
+}).pipe(Effect.withSpan("detectGroups"));
 
 const detectGroupMembers = (groupId: string) =>
   Effect.gen(function*() {
@@ -36,7 +38,7 @@ const detectGroupMembers = (groupId: string) =>
       Stream.runDrain
     );
     yield* Effect.log(`Finished detecting members for group ID: ${groupId}`);
-  });
+  }).pipe(Effect.withSpan("detectGroupMembers"));
 
 const oktaScan = Effect.gen(function*() {
   yield* Effect.log("Starting Okta scan");
@@ -45,12 +47,21 @@ const oktaScan = Effect.gen(function*() {
     detectGroups
   ], { concurrency: "unbounded" });
   yield* Effect.log("Okta scan completed");
-}).pipe(Effect.provide(Okta.fromEnv));
+}).pipe(
+  Effect.withSpan("oktaScan"),
+  Effect.provide(Okta.fromEnv)
+);
+
+const NodeSdkLive = NodeSdk.layer(() => ({
+  resource: { serviceName: "okta-assets-detector" },
+  // Export span data to the console
+  spanProcessor: new BatchSpanProcessor(new ConsoleSpanExporter())
+}));
 
 Effect.runPromiseExit(
   oktaScan.pipe(
-    Effect.timed,
-    Effect.tap((timing) => Effect.log(`Main effect completed in ${timing}`)),
     Effect.catchAll((err) => Effect.logError(`Main effect failed: ${err}`))
+  ).pipe(
+    Effect.provide(NodeSdkLive)
   )
 );
