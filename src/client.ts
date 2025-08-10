@@ -1,6 +1,6 @@
 import OktaSdk from "@okta/okta-sdk-nodejs";
 import type { V2Configuration } from "@okta/okta-sdk-nodejs/src/types/configuration.js";
-import { Config, Context, Data, Effect, Layer, Stream } from "effect";
+import { Config, Context, Data, Duration, Effect, Layer, Schedule, Stream } from "effect";
 
 export class OktaError extends Data.TaggedError("OktaError")<{
   cause?: unknown;
@@ -45,7 +45,7 @@ export const make = (config: V2Configuration) =>
           } else {
             return result;
           }
-        })
+        }).pipe(Effect.retry({ schedule: Schedule.exponential(Duration.millis(100)), times: 3 }))
     });
   });
 
