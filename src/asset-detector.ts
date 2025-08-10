@@ -1,11 +1,11 @@
 import "dotenv/config";
 import { Effect, Option, pipe, Stream } from "effect";
-import * as Okta from "./client.js";
+import * as OktaClient from "./client.js";
 
 const detectUsers = Effect.gen(function*() {
   yield* Effect.log("Starting to detect Okta users");
   yield* pipe(
-    Okta.listOktaUsers,
+    OktaClient.listOktaUsers,
     Stream.tap((user) => Effect.log(`User: ${user.profile?.firstName} ${user.profile?.lastName}`)),
     Stream.runDrain
   );
@@ -15,7 +15,7 @@ const detectUsers = Effect.gen(function*() {
 const detectGroups = Effect.gen(function*() {
   yield* Effect.log("Starting to detect Okta groups");
   yield* pipe(
-    Okta.listOktaGroups,
+    OktaClient.listOktaGroups,
     Stream.tap((group) => Effect.log(`Group: ${group.profile?.name}`)),
     Stream.map((group) => Option.fromNullable(group?.id).pipe(Option.getOrThrow)),
     Stream.mapEffect(detectGroupMembers, { concurrency: "unbounded" }),
@@ -29,7 +29,7 @@ const detectGroupMembers = (groupId: string) =>
     Effect.annotateLogsScoped({ groupId });
     yield* Effect.log("Starting to detect Okta group member");
     yield* pipe(
-      Okta.listOktaGroupMembers(groupId),
+      OktaClient.listOktaGroupMembers(groupId),
       Stream.tap((user) =>
         Effect.log(
           `Group ID ${groupId} - Group Member: ${user.profile?.firstName} ${user.profile?.lastName} ID ${user.id}`
@@ -49,5 +49,5 @@ export const oktaScan = Effect.gen(function*() {
   yield* Effect.log("Okta scan completed");
 }).pipe(
   Effect.withSpan("oktaScan"),
-  Effect.provide(Okta.fromEnv)
+  Effect.provide(OktaClient.fromEnv)
 );

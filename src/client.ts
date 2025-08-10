@@ -2,33 +2,33 @@ import OktaSdk from "@okta/okta-sdk-nodejs";
 import type { V2Configuration } from "@okta/okta-sdk-nodejs/src/types/configuration.js";
 import { Config, Context, Data, Duration, Effect, Layer, Schedule, Stream } from "effect";
 
-export class OktaError extends Data.TaggedError("OktaError")<{
+export class OktaClientError extends Data.TaggedError("OktaClientError")<{
   cause?: unknown;
   message?: string;
 }> {}
 
-const OktaClient = OktaSdk.Client;
+const OktaSdkClient = OktaSdk.Client;
 
-interface OktaImpl {
+interface OktaClientImpl {
   use: <T>(
-    fn: (client: InstanceType<typeof OktaClient>) => T
-  ) => Effect.Effect<Awaited<T>, OktaError, never>;
+    fn: (client: InstanceType<typeof OktaSdkClient>) => T
+  ) => Effect.Effect<Awaited<T>, OktaClientError, never>;
 }
-export class Okta extends Context.Tag("Okta")<Okta, OktaImpl>() {}
+export class OktaClient extends Context.Tag("OktaClient")<OktaClient, OktaClientImpl>() {}
 
 export const make = (config: V2Configuration) =>
   Effect.gen(function*() {
     const client = yield* Effect.try({
-      try: () => new OktaClient(config),
-      catch: (e) => new OktaError({ cause: e, message: "Failed to create Okta client" })
+      try: () => new OktaSdkClient(config),
+      catch: (e) => new OktaClientError({ cause: e, message: "Failed to create Okta client" })
     });
-    return Okta.of({
+    return OktaClient.of({
       use: (fn) =>
         Effect.gen(function*() {
           const result = yield* Effect.try({
             try: () => fn(client),
             catch: (e) =>
-              new OktaError({
+              new OktaClientError({
                 cause: e,
                 message: "Synchronous error in `Okta.use`"
               })
@@ -37,7 +37,7 @@ export const make = (config: V2Configuration) =>
             return yield* Effect.tryPromise({
               try: () => result,
               catch: (e) =>
-                new OktaError({
+                new OktaClientError({
                   cause: e,
                   message: "Asynchronous error in `Okta.use`"
                 })
@@ -49,10 +49,10 @@ export const make = (config: V2Configuration) =>
     });
   });
 
-export const layer = (config: V2Configuration) => Layer.scoped(Okta, make(config));
+export const layer = (config: V2Configuration) => Layer.scoped(OktaClient, make(config));
 
 export const fromEnv = Layer.scoped(
-  Okta,
+  OktaClient,
   Effect.gen(function*() {
     const orgUrl = yield* Config.string("OKTA_ORG_URL");
     const token = yield* Config.string("OKTA_API_TOKEN");
@@ -61,29 +61,29 @@ export const fromEnv = Layer.scoped(
 );
 
 export const listOktaUsers = Effect.gen(function*() {
-  const okta = yield* Okta;
+  const okta = yield* OktaClient;
   const response = yield* okta.use((client) => client.userApi.listUsers());
   return collectionToStream(response);
 }).pipe(Stream.unwrap);
 
 export const listOktaGroups = Effect.gen(function*() {
-  const okta = yield* Okta;
+  const okta = yield* OktaClient;
   const response = yield* okta.use((client) => client.groupApi.listGroups());
   return collectionToStream(response);
 }).pipe(Stream.unwrap);
 
 export const listOktaGroupMembers = (groupId: string) =>
   Effect.gen(function*() {
-    const okta = yield* Okta;
+    const okta = yield* OktaClient;
     const response = yield* okta.use((client) => client.groupApi.listGroupUsers({ groupId }));
     return collectionToStream(response);
   }).pipe(Stream.unwrap);
 
 function collectionToStream<T>(
   collection: OktaSdk.Collection<T>
-): Stream.Stream<T, OktaError> {
+): Stream.Stream<T, OktaClientError> {
   return Stream.fromAsyncIterable(
     collection,
-    (cause) => new OktaError({ cause })
+    (cause) => new OktaClientError({ cause })
   ).pipe(Stream.filter((item) => item !== null));
 }
