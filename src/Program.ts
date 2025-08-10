@@ -29,9 +29,10 @@ const detectGroups = Effect.gen(function*() {
 
 const detectGroupMembers = (groupId: string) =>
   Effect.gen(function*() {
-    yield* Effect.log(`Detecting members for group ID: ${groupId}`);
-    const members = Okta.listOktaGroupMembers(groupId);
-    yield* members.pipe(
+    Effect.annotateLogsScoped({ groupId });
+    yield* Effect.log("Starting to detect Okta group member");
+    yield* pipe(
+      Okta.listOktaGroupMembers(groupId),
       Stream.tap((user) =>
         Effect.log(
           `Group ID ${groupId} - Group Member: ${user.profile?.firstName} ${user.profile?.lastName} ID ${user.id}`
@@ -39,8 +40,8 @@ const detectGroupMembers = (groupId: string) =>
       ),
       Stream.runDrain
     );
-    yield* Effect.log(`Finished detecting members for group ID: ${groupId}`);
-  }).pipe(Effect.withSpan("detectGroupMembers"));
+    yield* Effect.log("Finished detecting Okta group member");
+  }).pipe(Effect.withSpan("detectGroupMembers", { attributes: { groupId } }));
 
 const oktaScan = Effect.gen(function*() {
   yield* Effect.log("Starting Okta scan");
