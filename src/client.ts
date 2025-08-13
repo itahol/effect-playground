@@ -18,10 +18,9 @@ export class OktaClient extends Context.Tag("OktaClient")<OktaClient, OktaClient
 
 export const make = (config: V2Configuration) =>
   Effect.gen(function*() {
-    const client = yield* Effect.try({
-      try: () => new OktaSdkClient(config),
-      catch: (e) => new OktaClientError({ cause: e, message: "Failed to create Okta client" })
-    });
+    const client = yield* Effect.sync(
+      () => new OktaSdkClient(config)
+    );
     return OktaClient.of({
       use: (fn) =>
         Effect.gen(function*() {
@@ -57,7 +56,7 @@ export const fromEnv = Layer.scoped(
     const orgUrl = yield* Config.string("OKTA_ORG_URL");
     const token = yield* Config.string("OKTA_API_TOKEN");
     return yield* make({ orgUrl, token });
-  })
+  }).pipe(Effect.orDie)
 );
 
 export const listOktaUsers = Effect.gen(function*() {
