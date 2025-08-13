@@ -6,7 +6,7 @@ import { GroupNotFoundError, OktaError, OktaGroupSchema, OktaUserSchema } from "
 
 const OktaSdkClient = OktaSdk.Client;
 
-function isResourceNotFoundError(cause: OktaSdk.OktaApiError | unknown): boolean {
+function isResourceNotFoundError(cause: unknown): boolean {
   if (!(cause instanceof OktaSdk.OktaApiError)) {
     return false;
   }
