@@ -4,15 +4,15 @@ import { BatchSpanProcessor } from "@opentelemetry/sdk-trace-base";
 import { Effect, Layer } from "effect";
 import { OktaAssetsDetector } from "./asset-detector.js";
 
-const NodeSdkLive = NodeSdk.layer(() => ({
-  resource: { serviceName: "okta-assets-detector" },
-  spanProcessor: new BatchSpanProcessor(new OTLPTraceExporter())
-}));
-
 const program = Effect.gen(function*() {
   const oktaAssetsDetector = yield* OktaAssetsDetector;
   return yield* oktaAssetsDetector.scan;
 });
+
+const NodeSdkLive = NodeSdk.layer(() => ({
+  resource: { serviceName: "okta-assets-detector" },
+  spanProcessor: new BatchSpanProcessor(new OTLPTraceExporter())
+}));
 
 Effect.runPromiseExit(
   program.pipe(
