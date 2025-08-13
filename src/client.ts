@@ -2,9 +2,16 @@ import OktaSdk from "@okta/okta-sdk-nodejs";
 import type { V2Configuration } from "@okta/okta-sdk-nodejs/src/types/configuration.js";
 import { Config, Context, Duration, Effect, Layer, Schedule, Schema, Stream } from "effect";
 import type { GroupId, OktaGroup, OktaUser } from "./domain.js";
-import { OktaError, OktaGroupSchema, OktaUserSchema } from "./domain.js";
+import { GroupNotFoundError, OktaError, OktaGroupSchema, OktaUserSchema } from "./domain.js";
 
 const OktaSdkClient = OktaSdk.Client;
+
+function isResourceNotFoundError(cause: OktaSdk.OktaApiError | unknown): boolean {
+  if (!(cause instanceof OktaSdk.OktaApiError)) {
+    return false;
+  }
+  return cause.status === 404 && cause.errorCode === "E0000007";
+}
 
 interface OktaClientImpl {
   use: <T>(
@@ -72,10 +79,25 @@ export const listOktaGroups: Stream.Stream<OktaGroup, OktaError, OktaClient> = E
   );
 }).pipe(Stream.unwrap);
 
-export const listOktaGroupMembers = (groupId: GroupId): Stream.Stream<OktaUser, OktaError, OktaClient> =>
+export const listOktaGroupMembers = (
+  groupId: GroupId
+): Stream.Stream<OktaUser, OktaError | GroupNotFoundError, OktaClient> =>
   Effect.gen(function*() {
     const okta = yield* OktaClient;
-    const response = yield* okta.use((client) => client.groupApi.listGroupUsers({ groupId }));
+    const response = yield* okta.use((client) => client.groupApi.listGroupUsers({ groupId })).pipe(
+      Effect.catchTag("OktaError", (error) =>
+        Effect.gen(function*() {
+          if (isResourceNotFoundError(error.cause)) {
+            return yield* Effect.fail(
+              new GroupNotFoundError({
+                groupId,
+                cause: error.cause
+              })
+            );
+          }
+          return yield* Effect.fail(error);
+        }))
+    );
     return collectionToStream(response).pipe(
       Stream.mapEffect((user) => Schema.decodeUnknown(OktaUserSchema)(user).pipe(Effect.orDie))
     );

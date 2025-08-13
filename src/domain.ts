@@ -26,6 +26,11 @@ export type GroupId = string & Brand.Brand<"GroupId">;
 export const GroupId = Brand.nominal<GroupId>();
 export const GroupIdSchema = Schema.String.pipe(Schema.brand("GroupId"));
 
+export class GroupNotFoundError extends Data.TaggedError("GroupNotFoundError")<{
+  groupId: GroupId;
+  cause?: unknown;
+}> {}
+
 export const UserStatusSchema = Schema.Literal(
   "STAGED",
   "PROVISIONED",
