@@ -1,6 +1,7 @@
 import "dotenv/config";
 import { Effect, Option, pipe, Stream } from "effect";
 import * as OktaClient from "./client.js";
+import type { GroupId } from "./domain.js";
 
 const detectUsers = Effect.fn("detectUsers")(function*() {
   yield* Effect.log("Starting to detect Okta users");
@@ -24,7 +25,7 @@ const detectGroups = Effect.fn("detectGroups")(function*() {
   yield* Effect.log("Finished detecting Okta groups");
 });
 
-const detectGroupMembers = Effect.fn("detectGroupMembers")((groupId: string) =>
+const detectGroupMembers = Effect.fn("detectGroupMembers")((groupId: GroupId) =>
   Effect.gen(function*() {
     Effect.annotateLogsScoped({ groupId });
     yield* Effect.log("Starting to detect Okta group member");
@@ -32,7 +33,7 @@ const detectGroupMembers = Effect.fn("detectGroupMembers")((groupId: string) =>
       OktaClient.listOktaGroupMembers(groupId),
       Stream.tap((user) =>
         Effect.log(
-          `Group ID ${groupId} - Group Member: ${user.profile?.firstName} ${user.profile?.lastName} ID ${user.id}`
+          `Group ID ${groupId} - Group Member: ${user?.profile?.firstName} ${user.profile?.lastName} ID ${user.id}`
         )
       ),
       Stream.runDrain

@@ -1,6 +1,8 @@
 import OktaSdk from "@okta/okta-sdk-nodejs";
 import type { V2Configuration } from "@okta/okta-sdk-nodejs/src/types/configuration.js";
-import { Config, Context, Data, Duration, Effect, Layer, Schedule, Stream } from "effect";
+import { Config, Context, Data, Duration, Effect, Layer, Schedule, Schema, Stream } from "effect";
+import type { GroupId, OktaGroup, OktaUser } from "./domain.js";
+import { OktaGroupSchema, OktaUserSchema } from "./domain.js";
 
 export class OktaClientError extends Data.TaggedError("OktaClientError")<{
   cause?: unknown;
@@ -59,23 +61,29 @@ export const fromEnv = Layer.scoped(
   }).pipe(Effect.orDie)
 );
 
-export const listOktaUsers = Effect.gen(function*() {
+export const listOktaUsers: Stream.Stream<OktaUser, OktaClientError, OktaClient> = Effect.gen(function*() {
   const okta = yield* OktaClient;
   const response = yield* okta.use((client) => client.userApi.listUsers());
-  return collectionToStream(response);
+  return collectionToStream(response).pipe(
+    Stream.mapEffect((user) => Schema.decodeUnknown(OktaUserSchema)(user).pipe(Effect.orDie))
+  );
 }).pipe(Stream.unwrap);
 
-export const listOktaGroups = Effect.gen(function*() {
+export const listOktaGroups: Stream.Stream<OktaGroup, OktaClientError, OktaClient> = Effect.gen(function*() {
   const okta = yield* OktaClient;
   const response = yield* okta.use((client) => client.groupApi.listGroups());
-  return collectionToStream(response);
+  return collectionToStream(response).pipe(
+    Stream.mapEffect((group) => Schema.decodeUnknown(OktaGroupSchema)(group).pipe(Effect.orDie))
+  );
 }).pipe(Stream.unwrap);
 
-export const listOktaGroupMembers = (groupId: string) =>
+export const listOktaGroupMembers = (groupId: GroupId): Stream.Stream<OktaUser, OktaClientError, OktaClient> =>
   Effect.gen(function*() {
     const okta = yield* OktaClient;
     const response = yield* okta.use((client) => client.groupApi.listGroupUsers({ groupId }));
-    return collectionToStream(response);
+    return collectionToStream(response).pipe(
+      Stream.mapEffect((user) => Schema.decodeUnknown(OktaUserSchema)(user).pipe(Effect.orDie))
+    );
   }).pipe(Stream.unwrap);
 
 function collectionToStream<T>(

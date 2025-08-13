@@ -19,12 +19,31 @@ export const UserStatusSchema = Schema.Literal(
   "DEPROVISIONED"
 );
 
+// Okta User Profile schema
 export const UserProfileSchema = Schema.Struct({
-  firstName: Schema.optional(Schema.String),
-  lastName: Schema.optional(Schema.String),
+  firstName: Schema.optional(Schema.NullOr(Schema.String)),
+  lastName: Schema.optional(Schema.NullOr(Schema.String)),
   email: Schema.optional(Schema.String),
   login: Schema.optional(Schema.String),
-  mobilePhone: Schema.optional(Schema.String)
+  mobilePhone: Schema.optional(Schema.NullOr(Schema.String)),
+  displayName: Schema.optional(Schema.NullOr(Schema.String)),
+  department: Schema.optional(Schema.String),
+  title: Schema.optional(Schema.NullOr(Schema.String)),
+  city: Schema.optional(Schema.NullOr(Schema.String)),
+  state: Schema.optional(Schema.NullOr(Schema.String)),
+  countryCode: Schema.optional(Schema.NullOr(Schema.String)),
+  zipCode: Schema.optional(Schema.NullOr(Schema.String)),
+  employeeNumber: Schema.optional(Schema.String),
+  costCenter: Schema.optional(Schema.NullOr(Schema.String)),
+  organization: Schema.optional(Schema.NullOr(Schema.String)),
+  division: Schema.optional(Schema.NullOr(Schema.String)),
+  manager: Schema.optional(Schema.NullOr(Schema.String)),
+  managerId: Schema.optional(Schema.NullOr(Schema.String)),
+  primaryPhone: Schema.optional(Schema.NullOr(Schema.String)),
+  secondEmail: Schema.optional(Schema.NullOr(Schema.String)),
+  locale: Schema.optional(Schema.String),
+  timezone: Schema.optional(Schema.NullOr(Schema.String)),
+  userType: Schema.optional(Schema.NullOr(Schema.String))
 });
 
 // User Credentials schema
@@ -37,12 +56,12 @@ export const UserCredentialsSchema = Schema.Struct({
 // Okta User schema
 export const OktaUserSchema = Schema.Struct({
   id: Schema.optional(UserIdSchema),
-  created: Schema.optional(Schema.DateFromString),
-  activated: Schema.optional(Schema.NullOr(Schema.DateFromString)),
-  lastLogin: Schema.optional(Schema.NullOr(Schema.DateFromString)),
-  lastUpdated: Schema.optional(Schema.DateFromString),
-  passwordChanged: Schema.optional(Schema.NullOr(Schema.DateFromString)),
-  statusChanged: Schema.optional(Schema.NullOr(Schema.DateFromString)),
+  created: Schema.optional(Schema.DateFromSelf),
+  activated: Schema.optional(Schema.NullOr(Schema.DateFromSelf)),
+  lastLogin: Schema.optional(Schema.NullOr(Schema.DateFromSelf)),
+  lastUpdated: Schema.optional(Schema.DateFromSelf),
+  passwordChanged: Schema.optional(Schema.NullOr(Schema.DateFromSelf)),
+  statusChanged: Schema.optional(Schema.NullOr(Schema.DateFromSelf)),
   status: Schema.optional(UserStatusSchema),
   profile: Schema.optional(UserProfileSchema),
   realmId: Schema.optional(Schema.String),
@@ -52,16 +71,18 @@ export const OktaUserSchema = Schema.Struct({
 
 export const GroupTypeSchema = Schema.Literal("OKTA_GROUP", "APP_GROUP", "BUILT_IN");
 
+// Okta Group Profile schema
 export const GroupProfileSchema = Schema.Struct({
   name: Schema.optional(Schema.String),
-  description: Schema.optional(Schema.String)
+  description: Schema.optional(Schema.NullOr(Schema.String)),
+  externalId: Schema.optional(Schema.NullOr(Schema.String))
 });
 
 export const OktaGroupSchema = Schema.Struct({
   id: Schema.optional(GroupIdSchema),
-  created: Schema.optional(Schema.DateFromString),
-  lastMembershipUpdated: Schema.optional(Schema.DateFromString),
-  lastUpdated: Schema.optional(Schema.DateFromString),
+  created: Schema.optional(Schema.DateFromSelf),
+  lastMembershipUpdated: Schema.optional(Schema.DateFromSelf),
+  lastUpdated: Schema.optional(Schema.DateFromSelf),
   type: Schema.optional(GroupTypeSchema),
   profile: Schema.optional(GroupProfileSchema),
   objectClass: Schema.optional(Schema.Array(Schema.String)),
