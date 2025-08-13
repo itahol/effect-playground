@@ -2,7 +2,7 @@ import "dotenv/config";
 import { Effect, Option, pipe, Stream } from "effect";
 import * as OktaClient from "./client.js";
 
-const detectUsers = Effect.gen(function*() {
+const detectUsers = Effect.fn("detectUsers")(function*() {
   yield* Effect.log("Starting to detect Okta users");
   yield* pipe(
     OktaClient.listOktaUsers,
@@ -10,9 +10,9 @@ const detectUsers = Effect.gen(function*() {
     Stream.runDrain
   );
   yield* Effect.log("Finished detecting Okta users");
-}).pipe(Effect.withSpan("detectUsers"));
+});
 
-const detectGroups = Effect.gen(function*() {
+const detectGroups = Effect.fn("detectGroups")(function*() {
   yield* Effect.log("Starting to detect Okta groups");
   yield* pipe(
     OktaClient.listOktaGroups,
@@ -22,9 +22,9 @@ const detectGroups = Effect.gen(function*() {
     Stream.runDrain
   );
   yield* Effect.log("Finished detecting Okta groups");
-}).pipe(Effect.withSpan("detectGroups"));
+});
 
-const detectGroupMembers = (groupId: string) =>
+const detectGroupMembers = Effect.fn("detectGroupMembers")((groupId: string) =>
   Effect.gen(function*() {
     Effect.annotateLogsScoped({ groupId });
     yield* Effect.log("Starting to detect Okta group member");
@@ -38,16 +38,21 @@ const detectGroupMembers = (groupId: string) =>
       Stream.runDrain
     );
     yield* Effect.log("Finished detecting Okta group member");
-  }).pipe(Effect.withSpan("detectGroupMembers", { attributes: { groupId } }));
-
-export const oktaScan = Effect.gen(function*() {
-  yield* Effect.log("Starting Okta scan");
-  yield* Effect.all([
-    detectUsers,
-    detectGroups
-  ], { concurrency: "unbounded" });
-  yield* Effect.log("Okta scan completed");
-}).pipe(
-  Effect.withSpan("oktaScan"),
-  Effect.provide(OktaClient.fromEnv)
+  })
 );
+
+export class OktaAssetsDetector extends Effect.Service<OktaAssetsDetector>()("OktaAssetsDetector", {
+  sync: () => ({
+    scan: Effect.gen(function*() {
+      yield* Effect.log("Starting Okta scan");
+      yield* Effect.all([
+        detectUsers(),
+        detectGroups()
+      ], { concurrency: "unbounded" });
+      yield* Effect.log("Okta scan completed");
+    }).pipe(
+      Effect.withSpan("oktaScan"),
+      Effect.provide(OktaClient.fromEnv)
+    )
+  })
+}) {}
