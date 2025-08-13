@@ -1,5 +1,18 @@
 import { Brand, Schema } from "effect";
 
+// Helper to convert null to undefined
+const nullToUndefined = <A>(schema: Schema.Schema<A>) =>
+  Schema.NullOr(schema).pipe(
+    Schema.transform(
+      Schema.Union(schema, Schema.Undefined),
+      {
+        strict: true,
+        decode: (value) => value === null ? undefined : value,
+        encode: (value) => value === undefined ? null : value
+      }
+    )
+  );
+
 export type UserId = string & Brand.Brand<"UserId">;
 export const UserId = Brand.nominal<UserId>();
 export const UserIdSchema = Schema.String.pipe(Schema.brand("UserId"));
@@ -21,52 +34,52 @@ export const UserStatusSchema = Schema.Literal(
 
 // Okta User Profile schema
 export const UserProfileSchema = Schema.Struct({
-  firstName: Schema.optional(Schema.NullOr(Schema.String)),
-  lastName: Schema.optional(Schema.NullOr(Schema.String)),
+  firstName: Schema.optional(nullToUndefined(Schema.String)),
+  lastName: Schema.optional(nullToUndefined(Schema.String)),
   email: Schema.optional(Schema.String),
   login: Schema.optional(Schema.String),
-  mobilePhone: Schema.optional(Schema.NullOr(Schema.String)),
-  displayName: Schema.optional(Schema.NullOr(Schema.String)),
+  mobilePhone: Schema.optional(nullToUndefined(Schema.String)),
+  displayName: Schema.optional(nullToUndefined(Schema.String)),
   department: Schema.optional(Schema.String),
-  title: Schema.optional(Schema.NullOr(Schema.String)),
-  city: Schema.optional(Schema.NullOr(Schema.String)),
-  state: Schema.optional(Schema.NullOr(Schema.String)),
-  countryCode: Schema.optional(Schema.NullOr(Schema.String)),
-  zipCode: Schema.optional(Schema.NullOr(Schema.String)),
+  title: Schema.optional(nullToUndefined(Schema.String)),
+  city: Schema.optional(nullToUndefined(Schema.String)),
+  state: Schema.optional(nullToUndefined(Schema.String)),
+  countryCode: Schema.optional(nullToUndefined(Schema.String)),
+  zipCode: Schema.optional(nullToUndefined(Schema.String)),
   employeeNumber: Schema.optional(Schema.String),
-  costCenter: Schema.optional(Schema.NullOr(Schema.String)),
-  organization: Schema.optional(Schema.NullOr(Schema.String)),
-  division: Schema.optional(Schema.NullOr(Schema.String)),
-  manager: Schema.optional(Schema.NullOr(Schema.String)),
-  managerId: Schema.optional(Schema.NullOr(Schema.String)),
-  primaryPhone: Schema.optional(Schema.NullOr(Schema.String)),
-  secondEmail: Schema.optional(Schema.NullOr(Schema.String)),
+  costCenter: Schema.optional(nullToUndefined(Schema.String)),
+  organization: Schema.optional(nullToUndefined(Schema.String)),
+  division: Schema.optional(nullToUndefined(Schema.String)),
+  manager: Schema.optional(nullToUndefined(Schema.String)),
+  managerId: Schema.optional(nullToUndefined(Schema.String)),
+  primaryPhone: Schema.optional(nullToUndefined(Schema.String)),
+  secondEmail: Schema.optional(nullToUndefined(Schema.String)),
   locale: Schema.optional(Schema.String),
-  timezone: Schema.optional(Schema.NullOr(Schema.String)),
-  userType: Schema.optional(Schema.NullOr(Schema.String))
+  timezone: Schema.optional(nullToUndefined(Schema.String)),
+  userType: Schema.optional(nullToUndefined(Schema.String))
 });
 
 // User Credentials schema
 export const UserCredentialsSchema = Schema.Struct({
-  password: Schema.optional(Schema.Record({ key: Schema.String, value: Schema.Unknown })),
-  provider: Schema.optional(Schema.Record({ key: Schema.String, value: Schema.Unknown })),
-  recovery_question: Schema.optional(Schema.Record({ key: Schema.String, value: Schema.Unknown }))
+  password: Schema.optional(nullToUndefined(Schema.Record({ key: Schema.String, value: Schema.Unknown }))),
+  provider: Schema.optional(nullToUndefined(Schema.Record({ key: Schema.String, value: Schema.Unknown }))),
+  recovery_question: Schema.optional(nullToUndefined(Schema.Record({ key: Schema.String, value: Schema.Unknown })))
 });
 
 // Okta User schema
 export const OktaUserSchema = Schema.Struct({
   id: Schema.optional(UserIdSchema),
   created: Schema.optional(Schema.DateFromSelf),
-  activated: Schema.optional(Schema.NullOr(Schema.DateFromSelf)),
-  lastLogin: Schema.optional(Schema.NullOr(Schema.DateFromSelf)),
+  activated: Schema.optional(nullToUndefined(Schema.DateFromSelf)),
+  lastLogin: Schema.optional(nullToUndefined(Schema.DateFromSelf)),
   lastUpdated: Schema.optional(Schema.DateFromSelf),
-  passwordChanged: Schema.optional(Schema.NullOr(Schema.DateFromSelf)),
-  statusChanged: Schema.optional(Schema.NullOr(Schema.DateFromSelf)),
+  passwordChanged: Schema.optional(nullToUndefined(Schema.DateFromSelf)),
+  statusChanged: Schema.optional(nullToUndefined(Schema.DateFromSelf)),
   status: Schema.optional(UserStatusSchema),
   profile: Schema.optional(UserProfileSchema),
   realmId: Schema.optional(Schema.String),
   credentials: Schema.optional(UserCredentialsSchema),
-  _links: Schema.optional(Schema.Record({ key: Schema.String, value: Schema.Unknown }))
+  _links: Schema.optional(nullToUndefined(Schema.Record({ key: Schema.String, value: Schema.Unknown })))
 });
 
 export const GroupTypeSchema = Schema.Literal("OKTA_GROUP", "APP_GROUP", "BUILT_IN");
@@ -86,7 +99,7 @@ export const OktaGroupSchema = Schema.Struct({
   type: Schema.optional(GroupTypeSchema),
   profile: Schema.optional(GroupProfileSchema),
   objectClass: Schema.optional(Schema.Array(Schema.String)),
-  _links: Schema.optional(Schema.Record({ key: Schema.String, value: Schema.Unknown }))
+  _links: Schema.optional(nullToUndefined(Schema.Record({ key: Schema.String, value: Schema.Unknown })))
 });
 
 export type UserStatus = typeof UserStatusSchema.Type;
