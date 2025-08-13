@@ -78,7 +78,7 @@ export const UserCredentialsSchema = Schema.Struct({
 
 // Okta User schema
 export const OktaUserSchema = Schema.Struct({
-  id: Schema.optional(UserIdSchema),
+  id: UserIdSchema,
   created: Schema.optional(Schema.DateFromSelf),
   activated: Schema.optional(nullToUndefined(Schema.DateFromSelf)),
   lastLogin: Schema.optional(nullToUndefined(Schema.DateFromSelf)),
@@ -102,7 +102,7 @@ export const GroupProfileSchema = Schema.Struct({
 });
 
 export const OktaGroupSchema = Schema.Struct({
-  id: Schema.optional(GroupIdSchema),
+  id: GroupIdSchema,
   created: Schema.optional(Schema.DateFromSelf),
   lastMembershipUpdated: Schema.optional(Schema.DateFromSelf),
   lastUpdated: Schema.optional(Schema.DateFromSelf),

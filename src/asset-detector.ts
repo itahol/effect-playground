@@ -1,7 +1,7 @@
 import "dotenv/config";
-import { Effect, Option, pipe, Stream } from "effect";
+import { Effect, pipe, Stream } from "effect";
 import * as OktaClient from "./client.js";
-import type { GroupId } from "./domain.js";
+import { type GroupId } from "./domain.js";
 
 const detectUsers = Effect.fn("detectUsers")(function*() {
   yield* Effect.log("Starting to detect Okta users");
@@ -18,8 +18,15 @@ const detectGroups = Effect.fn("detectGroups")(function*() {
   yield* pipe(
     OktaClient.listOktaGroups,
     Stream.tap((group) => Effect.log(`Group: ${group.profile?.name}`)),
-    Stream.map((group) => Option.fromNullable(group?.id).pipe(Option.getOrThrow)),
-    Stream.mapEffect(detectGroupMembers, { concurrency: "unbounded" }),
+    Stream.mapEffect(
+      (group) =>
+        detectGroupMembers(group.id).pipe(
+          Effect.catchTag("GroupNotFoundError", (_cause) => Effect.succeed("Group not found"))
+        ),
+      {
+        concurrency: "unbounded"
+      }
+    ),
     Stream.runDrain
   );
   yield* Effect.log("Finished detecting Okta groups");
