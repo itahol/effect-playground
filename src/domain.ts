@@ -1,4 +1,4 @@
-import { Brand, Schema } from "effect";
+import { Brand, Data, Schema } from "effect";
 
 // Helper to convert null to undefined
 const nullToUndefined = <A>(schema: Schema.Schema<A>) =>
@@ -12,6 +12,11 @@ const nullToUndefined = <A>(schema: Schema.Schema<A>) =>
       }
     )
   );
+
+export class OktaError extends Data.TaggedError("OktaError")<{
+  cause?: unknown;
+  message?: string;
+}> {}
 
 export type UserId = string & Brand.Brand<"UserId">;
 export const UserId = Brand.nominal<UserId>();

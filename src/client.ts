@@ -1,20 +1,15 @@
 import OktaSdk from "@okta/okta-sdk-nodejs";
 import type { V2Configuration } from "@okta/okta-sdk-nodejs/src/types/configuration.js";
-import { Config, Context, Data, Duration, Effect, Layer, Schedule, Schema, Stream } from "effect";
+import { Config, Context, Duration, Effect, Layer, Schedule, Schema, Stream } from "effect";
 import type { GroupId, OktaGroup, OktaUser } from "./domain.js";
-import { OktaGroupSchema, OktaUserSchema } from "./domain.js";
-
-export class OktaClientError extends Data.TaggedError("OktaClientError")<{
-  cause?: unknown;
-  message?: string;
-}> {}
+import { OktaError, OktaGroupSchema, OktaUserSchema } from "./domain.js";
 
 const OktaSdkClient = OktaSdk.Client;
 
 interface OktaClientImpl {
   use: <T>(
     fn: (client: InstanceType<typeof OktaSdkClient>) => T
-  ) => Effect.Effect<Awaited<T>, OktaClientError, never>;
+  ) => Effect.Effect<Awaited<T>, OktaError, never>;
 }
 export class OktaClient extends Context.Tag("OktaClient")<OktaClient, OktaClientImpl>() {}
 
@@ -29,7 +24,7 @@ export const make = (config: V2Configuration) =>
           const result = yield* Effect.try({
             try: () => fn(client),
             catch: (e) =>
-              new OktaClientError({
+              new OktaError({
                 cause: e,
                 message: "Synchronous error in `Okta.use`"
               })
@@ -38,7 +33,7 @@ export const make = (config: V2Configuration) =>
             return yield* Effect.tryPromise({
               try: () => result,
               catch: (e) =>
-                new OktaClientError({
+                new OktaError({
                   cause: e,
                   message: "Asynchronous error in `Okta.use`"
                 })
@@ -61,7 +56,7 @@ export const fromEnv = Layer.scoped(
   }).pipe(Effect.orDie)
 );
 
-export const listOktaUsers: Stream.Stream<OktaUser, OktaClientError, OktaClient> = Effect.gen(function*() {
+export const listOktaUsers: Stream.Stream<OktaUser, OktaError, OktaClient> = Effect.gen(function*() {
   const okta = yield* OktaClient;
   const response = yield* okta.use((client) => client.userApi.listUsers());
   return collectionToStream(response).pipe(
@@ -69,7 +64,7 @@ export const listOktaUsers: Stream.Stream<OktaUser, OktaClientError, OktaClient>
   );
 }).pipe(Stream.unwrap);
 
-export const listOktaGroups: Stream.Stream<OktaGroup, OktaClientError, OktaClient> = Effect.gen(function*() {
+export const listOktaGroups: Stream.Stream<OktaGroup, OktaError, OktaClient> = Effect.gen(function*() {
   const okta = yield* OktaClient;
   const response = yield* okta.use((client) => client.groupApi.listGroups());
   return collectionToStream(response).pipe(
@@ -77,7 +72,7 @@ export const listOktaGroups: Stream.Stream<OktaGroup, OktaClientError, OktaClien
   );
 }).pipe(Stream.unwrap);
 
-export const listOktaGroupMembers = (groupId: GroupId): Stream.Stream<OktaUser, OktaClientError, OktaClient> =>
+export const listOktaGroupMembers = (groupId: GroupId): Stream.Stream<OktaUser, OktaError, OktaClient> =>
   Effect.gen(function*() {
     const okta = yield* OktaClient;
     const response = yield* okta.use((client) => client.groupApi.listGroupUsers({ groupId }));
@@ -88,9 +83,9 @@ export const listOktaGroupMembers = (groupId: GroupId): Stream.Stream<OktaUser, 
 
 function collectionToStream<T>(
   collection: OktaSdk.Collection<T>
-): Stream.Stream<T, OktaClientError> {
+): Stream.Stream<T, OktaError> {
   return Stream.fromAsyncIterable(
     collection,
-    (cause) => new OktaClientError({ cause })
+    (cause) => new OktaError({ cause })
   ).pipe(Stream.filter((item) => item !== null));
 }
